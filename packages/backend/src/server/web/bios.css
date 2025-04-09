@@ -7,9 +7,15 @@
 @import url("https://cdn.jsdelivr.net/npm/jetbrains-mono@1.0.6/css/jetbrains-mono.min.css");
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-jp.min.css");
+@font-face {
+	font-family: 'ONEMobilePOP';
+	src: url('https://misskey.njy17.kr/files/f34339cc-00e1-4789-b4c0-a741f471591f') format('woff');
+	font-weight: normal;
+	font-style: normal;
+}
 
 * {
-	font-family: "JetBrains Mono", "Pretendard JP", Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
+	font-family: 'ONEMobilePOP', "JetBrains Mono", "Pretendard JP", Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
 }
 
 html {
