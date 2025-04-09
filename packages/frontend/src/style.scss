@@ -10,6 +10,12 @@
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-jp.min.css");
 @import url("https://misskey.njy17.kr/files/4c3aea8c-edce-47ac-87c4-f869d5be7486");
+@font-face {
+	font-family: 'ONEMobilePOP';
+	src: url('https://misskey.njy17.kr/files/f34339cc-00e1-4789-b4c0-a741f471591f') format('woff');
+	font-weight: normal;
+	font-style: normal;
+}
 $default-font: 'ONEMobilePOP', "Hiragino Sans", "Apple SD Gothic Neo", Meiryo, "Noto Sans JP", "Noto Sans KR", "Malgun Gothic", Osaka, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
 $system-font: 'ONEMobilePOP', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", Roboto, "Noto Sans KR", "Segoe UI", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
 $monospace-font: "Pretendard JP", Pretendard, "JetBrains Mono", "Fira code", "Fira Mono", Consolas, Menlo, Courier, monospace !important;
