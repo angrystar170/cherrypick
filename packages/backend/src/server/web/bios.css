@@ -7,9 +7,10 @@
 @import url("https://cdn.jsdelivr.net/npm/jetbrains-mono@1.0.6/css/jetbrains-mono.min.css");
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-jp.min.css");
+@import url("https://page.njy17.kr/ONEMobilePOP.css");
 
 * {
-	font-family: "JetBrains Mono", "Pretendard JP", Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
+	font-family: 'ONEMobilePOP', "JetBrains Mono", "Pretendard JP", Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
 }
 
 html {
