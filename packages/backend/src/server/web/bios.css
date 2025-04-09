@@ -8,9 +8,13 @@
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-jp.min.css");
 @import url("https://misskey.njy17.kr/files/4c3aea8c-edce-47ac-87c4-f869d5be7486");
-
+/*
 * {
 	font-family: 'ONEMobilePOP', "JetBrains Mono", "Pretendard JP", Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
+}
+*/
+* {
+	font-family: 'ONEMobilePOP', Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
 }
 
 html {
