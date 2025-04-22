@@ -1530,13 +1530,6 @@ _showingAnimatedImages:
   always: "항상 움직임"
   interaction: "건드리면 움직임"
   inactive: "일정 시간이 지나면 멈춤"
-right: "오른쪽"
-bottom: "아래"
-top: "위"
-embed: "임베드"
-settingsMigrating: "설정을 이전하는 중입니다. 잠시 기다려주십시오... (나중에 '환경설정 → 기타 → 기존 설정 정보를 이전'에서 수동으로 이전할 수도 있습니다)"
-readonly: "읽기 전용"
-goToDeck: "덱으로 돌아가기"
 _chat:
   noMessagesYet: "아직 메시지가 없어요.\n간단하게 인사로 시작해 보는 것은 어떨까요?"
   newMessage: "새로운 메시지"
