@@ -1530,7 +1530,6 @@ _showingAnimatedImages:
   always: "항상 움직임"
   interaction: "건드리면 움직임"
   inactive: "일정 시간이 지나면 멈춤"
-compress: "압축"
 right: "오른쪽"
 bottom: "아래"
 top: "위"
