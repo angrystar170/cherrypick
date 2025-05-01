@@ -1539,7 +1539,7 @@ _chat:
   roomChat_description: "여러 명이 함께 채팅할 수 있어요.\n또한, 개인 채팅을 허용하지 않은 사용자도 상대방이 수락하면 채팅을 할 수 있어요."
   createRoom: "방 생성"
   inviteUserToChat: "사용자를 초대해 채팅을 시작하세요"
-  yourRooms: "생성한 룸"
+  yourRooms: "생성한 방"
   joiningRooms: "참가 중인 방"
   invitations: "초대"
   noInvitations: "초대장이 없어요"
