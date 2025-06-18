@@ -1615,6 +1615,8 @@ _preferencesProfile:
   profileName: "프로필 이름"
   profileNameDescription: "이 디바이스를 식별할 이름을 설정해 주세요."
   profileNameDescription2: "예: '메인 PC', '스마트폰' 등"
+  manageProfiles: "프로필 관리"
+  copyprofileastext: "텍스트로 프로필 복사"
 _preferencesBackup:
   autoBackup: "자동 백업"
   restoreFromBackup: "백업으로 복구"
