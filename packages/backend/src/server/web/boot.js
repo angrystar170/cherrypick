@@ -232,7 +232,7 @@
 		errorsElement.appendChild(detailsElement);
 		addStyle(`
 		
-		@import url("https://cdn.njy17.kr/files/css/ONEMobilePOP.css");
+		@import url("https://storage.njy17.kr/misskey-fonts/ONEMobilePOP.css");
 		
 		* {
 			font-family: 'ONEMobilePOP', BIZ UDGothic, Roboto, HelveticaNeue, Arial, sans-serif;
