@@ -50,7 +50,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</TransitionGroup>
 			</div>
 
-			<div v-if="user && (!user.canChat || user.host !== null)">
+			<div v-if="user && !user.canChat">
 				<MkInfo warn>{{ i18n.ts._chat.chatNotAvailableInOtherAccount }}</MkInfo>
 			</div>
 
@@ -71,7 +71,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</div>
 
 	<template #footer>
-		<div v-if="tab === 'chat'" :class="$style.footer">
+		<div v-if="tab === 'chat'" :class="[$style.footer, {[$style.isFriendly]: isMobile && isFriendly().value }]">
 			<div class="_gaps">
 				<Transition name="fade">
 					<div v-show="showIndicator" :class="$style.new">
@@ -111,6 +111,16 @@ import { useRouter } from '@/router.js';
 import { useMutationObserver } from '@/composables/use-mutation-observer.js';
 import MkInfo from '@/components/MkInfo.vue';
 import { makeDateSeparatedTimelineComputedRef } from '@/utility/timeline-date-separate.js';
+import { acct as getAcct } from '@/filters/user.js';
+import { isFriendly } from '@/utility/is-friendly.js';
+import { deviceKind } from '@/utility/device-kind.js';
+
+const MOBILE_THRESHOLD = 500;
+
+const isMobile = ref(deviceKind === 'smartphone' || window.innerWidth <= MOBILE_THRESHOLD);
+window.addEventListener('resize', () => {
+	isMobile.value = deviceKind === 'smartphone' || window.innerWidth <= MOBILE_THRESHOLD;
+});
 
 const $i = ensureSignin();
 const router = useRouter();
@@ -134,6 +144,7 @@ const messages = ref<NormalizedChatMessage[]>([]);
 const canFetchMore = ref(false);
 const user = ref<Misskey.entities.UserDetailed | null>(null);
 const room = ref<Misskey.entities.ChatRoom | null>(null);
+const memberships = ref<Misskey.entities.ChatRoomMembership[]>([]);
 const connection = ref<Misskey.IChannelConnection<Misskey.Channels['chatUser']> | Misskey.IChannelConnection<Misskey.Channels['chatRoom']> | null>(null);
 const showIndicator = ref(false);
 const timelineEl = useTemplateRef('timelineEl');
@@ -236,6 +247,11 @@ async function initialize() {
 
 		room.value = r;
 		messages.value = m.map(x => normalizeMessage(x));
+
+		memberships.value = await misskeyApi('chat/rooms/members', {
+			roomId: room.value.id,
+			limit: 50,
+		});
 
 		if (messages.value.length === LIMIT) {
 			canFetchMore.value = true;
@@ -369,7 +385,7 @@ onBeforeUnmount(() => {
 async function inviteUser() {
 	if (room.value == null) return;
 
-	const invitee = await os.selectUser({ includeSelf: false, localOnly: true });
+	const invitee = await os.selectUser({ includeSelf: false, localOnly: false });
 	os.apiWithDialog('chat/rooms/invitations/create', {
 		roomId: room.value.id,
 		userId: invitee.id,
@@ -456,12 +472,14 @@ definePage(computed(() => {
 		if (user.value) {
 			return {
 				userName: user.value,
-				title: user.value.name ?? user.value.username,
+				title: user.value.name ? `${user.value.name} (@${user.value.username})` : `@${user.value.username}`,
+				subtitle: `@${getAcct(user.value)}`,
 				avatar: user.value,
 			};
 		} else if (room.value) {
 			return {
 				title: room.value.name,
+				subtitle: i18n.tsx._chat.usersCount({ n: memberships.value.length + 1 }),
 				icon: 'ti ti-users',
 			};
 		} else {
@@ -502,6 +520,10 @@ definePage(computed(() => {
 .footer {
 	width: 100%;
 	padding-top: 8px;
+
+	&.isFriendly {
+		padding-bottom: 50px;
+	}
 }
 
 .new {
@@ -522,10 +544,6 @@ definePage(computed(() => {
 .newIcon {
 	display: inline-block;
 	margin-right: 8px;
-}
-
-.footer {
-
 }
 
 .form {
