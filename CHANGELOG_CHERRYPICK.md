@@ -58,7 +58,7 @@ Misskey의 전체 변경 사항을 확인하려면, [CHANGELOG.md#2025xx](CHANGE
 - Enhance: `MkPagination`을 사용하는 요소에서 무한 스크롤을 사용할 수 있음
 - Enhance: 노트 상세 페이지에서 이전 또는 다음 HTL/LTL을 불러올 수 있음 (yojo-art/cherrypick#572)
 - Enhance: 노트 상세 페이지의 리액션 목록을 표시할 때 리액션이 없으면 `아무것도 없어요!` 문구를 표시함
-- Enhance: 노트 상세 페이지의 노트 작성 폼을 클릭하기 전에는 노트 작성 버튼을 표시하지 않도록 변경함
+- Enhance: 노트 상세 페이지의 노트 게시 화면을 클릭하기 전에는 노트 작성 버튼을 표시하지 않도록 변경함
 - Enhance: 터치스크린 환경에서 노트의 리액션 뷰어를 길게 눌러 이모지 메뉴를 열 수 있음
 - Enhance: 검색 페이지의 디자인이 개선됨
 - Enhance: 노트 위에 커서를 올려 노트를 강조할 수 있음
@@ -66,11 +66,12 @@ Misskey의 전체 변경 사항을 확인하려면, [CHANGELOG.md#2025xx](CHANGE
   - 개인 대화인 경우, 헤더의 서브 타이틀에 상대방의 사용자 이름이 표시됩니다.
   - 그룹 대화인 경우, 헤더의 서브 타이틀에 참여 중인 사용자 수가 표시됩니다.
 - Enhance: 부드러운 전환 애니메이션을 사용할 수 있음
-  - 이 설정은 `설정 > 환경 설정 > 성능`에서 변경할 수 있습니다.
+  - 이 설정은 `설정 → 환경 설정 → 성능`에서 변경할 수 있습니다.
   - 이 설정을 사용하면 잘못된 UI가 표시 또는 전환이 이루어질 가능성이 있으므로 기본값은 비활성화로 설정되어 있습니다.
+- Enhance: 노트 게시 화면에서 CW의 제목과 본문 내용을 서로 바꿀 수 있음 (misskey-dev/misskey#14596)
 - Fix: (Friendly) 알림 영역이 잘못된 디자인으로 표시될 수 있음
 - Fix: (Friendly) 최하단으로 스크롤하면 요소가 네비게이션 바에 가려져 클릭하지 못할 수 있음
-- Fix: `제어판 > 신고`의 `리졸브` 섹션이 잘못된 디자인으로 표시될 수 있음
+- Fix: `제어판 → 신고`의 `리졸브` 섹션이 잘못된 디자인으로 표시될 수 있음
 - Fix: 이벤트 URL 섹션 이름이 표시되지 않음
 - Fix: 사용자 페이지의 타임라인 또는 노트 탭에서 리액션 탭을 통해 리액션 목록을 불러올 때 잘못된 동작을 할 수 있음
   - 리액션한 노트 타임라인이 표시된 이후, 전체 노트 타임라인이 표시되는 문제를 수정합니다.
@@ -87,10 +88,17 @@ Misskey의 전체 변경 사항을 확인하려면, [CHANGELOG.md#2025xx](CHANGE
 
 ### Server
 - Feat: 이벤트 연합 (yojo-art/cherrypick#658)
+- Enhance: NodeInfo에서 kmyblue 호환성을 향상시키기 위해 사용 가능한 기능을 표시하도록 설정됨 (yojo-art/cherrypick#624)
 - Fix: 이벤트가 포함된 노트를 편집하면 편집한 내용이 연합되지 않을 수 있음
 - Fix: 상대방이 나를 팔로우했을 때 ServiceWorker를 통한 알림이 제대로 표시되지 않을 수 있음
 - Fix: 이름 또는 로고를 지정하지 않은 클라이언트가 `OAuth2ProviderService`를 사용하려고 할 때 오류가 발생할 수 있음 (kokonect-link/cherrypick#609)
   - OAuth 2.0 표준안 준수를 위해 수정되었습니다.
+- Fix: 정지되지 않은 원격 사용자가 로컬과 상호 작용할 수 없음 (misskey-dev/misskey#13890)
+- Fix: JoinMisskey API에 의해 Misskey Hub의 서버 목록에 CherryPick 인스턴스가 표시되지 않을 수 있음
+  - CherryPick은 Misskey를 기반으로 하며, Mastodon 또는 Pleroma 등과 같은 타사 서비스가 아닌 Misskey 포크 소프트웨어 중 하나입니다.
+  - JoinMisskey는 `software.name`이 `misskey`인 서버만 허용하며, 여기에 해당하지 않을 경우 `https://instanceapp.misskey.page/not-misskey.txt`로 분류되어 서버 목록에 나타나지 않습니다.
+    이러한 문제를 우회하기 위해, JoinMisskey API에서의 NodeInfo 호출이 감지되면, `misskey`를 반환하는 방식으로 우회합니다.
+    이 방법은 향후 JoinMisskey API의 변경으로 인해 사용하지 못할 가능성이 있습니다.
 
 ---
 
