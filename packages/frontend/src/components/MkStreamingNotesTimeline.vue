@@ -4,7 +4,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<component :is="prefer.s.enablePullToRefresh ? MkPullToRefresh : 'div'" :refresher="() => reloadTimeline()">
+<component :is="prefer.s.enablePullToRefresh ? MkPullToRefresh : 'div'" :refresher="reloadTimeline">
 	<MkLoading v-if="paginator.fetching.value"/>
 
 	<MkError v-else-if="paginator.error.value" @retry="paginator.init()"/>
@@ -116,9 +116,11 @@ const MOBILE_THRESHOLD = 500;
 // デスクトップでウィンドウを狭くしたときモバイルUIが表示されて欲しいことはあるので deviceKind === 'desktop' の判定は行わない
 const isDesktop = ref(window.innerWidth >= DESKTOP_THRESHOLD);
 const isMobile = ref(['smartphone', 'tablet'].includes(String(deviceKind)) || window.innerWidth <= MOBILE_THRESHOLD);
-window.addEventListener('resize', () => {
+const handleResize = () => {
 	isMobile.value = deviceKind === 'smartphone' || window.innerWidth <= MOBILE_THRESHOLD;
-});
+};
+
+window.addEventListener('resize', handleResize);
 
 const noGap = !prefer.s.showGapBetweenNotesInTimeline;
 
@@ -293,6 +295,7 @@ onUnmounted(() => {
 	if (scrollContainer) {
 		scrollContainer.removeEventListener('scroll', onScrollContainerScroll);
 	}
+	window.removeEventListener('resize', handleResize);
 });
 
 const visibility = useDocumentVisibility();

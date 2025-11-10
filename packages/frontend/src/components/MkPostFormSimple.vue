@@ -83,7 +83,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<template #x>
 				<MkTime v-if="scheduledDeleteAt" :key="scheduledDeleteAt" :time="scheduledDeleteAt" :mode="'detail'" style="font-weight: bold;"/>
 			</template>
-		</I18n>
+		</I18n> - <button class="_textButton" @click="cancelScheduleDelete()">{{ i18n.ts.cancel }}</button>
 	</MkInfo>
 	<MkInfo v-if="hasNotSpecifiedMentions && showForm" warn :class="$style.hasNotSpecifiedMentions">{{ i18n.ts.notSpecifiedMentionWarning }} - <button class="_textButton" @click="addMissingMention()">{{ i18n.ts.add }}</button></MkInfo>
 	<div v-show="useCw && showForm" :class="$style.cwOuter">
@@ -108,6 +108,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</div>
 	<MkPollEditor v-if="poll && !props.updateMode && showForm" v-model="poll" @destroyed="poll = null"/>
 	<MkScheduledNoteDelete v-if="scheduledNoteDelete" v-model="scheduledNoteDelete" @destroyed="scheduledNoteDelete = null"/>
+	<MkDeliveryTargetEditor v-if="deliveryTargets" v-model="deliveryTargets" @destroyed="deliveryTargets = null"/>
 	<MkNotePreview v-if="showPreview && showForm && textLength > 0" :class="$style.preview" :text="text" :files="files" :poll="poll ?? undefined" :useCw="useCw" :cw="cw" :user="postAccount ?? $i" :showProfile="showProfilePreview"/>
 	<div v-if="showingOptions && showForm" style="padding: 8px 16px;">
 	</div>
@@ -142,6 +143,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 import { inject, watch, nextTick, onMounted, defineAsyncComponent, provide, shallowRef, ref, computed, useTemplateRef, onUnmounted } from 'vue';
 import * as mfm from 'mfc-js';
 import * as Misskey from 'cherrypick-js';
+import { parseMfmCached } from '@/utility/mfm-cache.js';
 import insertTextAtCursor from 'insert-text-at-cursor';
 import { toASCII } from 'punycode.js';
 import autosize from 'autosize';
@@ -154,6 +156,7 @@ import type { MenuItem } from '@/types/menu.js';
 import type { PollEditorModelValue } from '@/components/MkPollEditor.vue';
 import type { UploaderItem } from '@/composables/use-uploader.js';
 import type { DeleteScheduleEditorModelValue } from '@/components/MkScheduledNoteDelete.vue';
+import type { DeliveryTargetEditorModelValue } from '@/components/MkDeliveryTargetEditor.vue';
 import MkNotePreview from '@/components/MkNotePreview.vue';
 import XPostFormAttaches from '@/components/MkPostFormAttaches.vue';
 import XTextCounter from '@/components/MkPostForm.TextCounter.vue';
@@ -187,6 +190,7 @@ import { checkDragDataType, getDragData } from '@/drag-and-drop.js';
 import { useUploader } from '@/composables/use-uploader.js';
 import { haptic } from '@/utility/haptic.js';
 import * as sound from '@/utility/sound.js';
+import MkDeliveryTargetEditor from '@/components/MkDeliveryTargetEditor.vue';
 
 const $i = ensureSignin();
 
@@ -226,7 +230,7 @@ const showForm = ref(false);
 const posting = ref(false);
 const posted = ref(false);
 const text = ref(props.initialText ?? '');
-const files = ref(props.initialFiles ?? ([] as Misskey.entities.DriveFile[]));
+const files = shallowRef(props.initialFiles ?? ([] as Misskey.entities.DriveFile[]));
 const poll = ref<PollEditorModelValue | null>(null);
 const event = ref<any>(null);
 const useCw = ref<boolean>(!!props.initialCw);
@@ -258,6 +262,7 @@ const justEndedComposition = ref(false);
 const renoteTargetNote: ShallowRef<PostFormProps['renote'] | null> = shallowRef(props.renote);
 const replyTargetNote: ShallowRef<PostFormProps['reply'] | null> = shallowRef(props.reply);
 const targetChannel = shallowRef(props.channel);
+const deliveryTargets = ref<DeliveryTargetEditorModelValue | null>(null);
 
 const serverDraftId = ref<string | null>(null);
 const postFormActions = getPluginHandlers('post_form_action');
@@ -464,11 +469,12 @@ function watchForDraft() {
 	watch(reactionAcceptance, () => saveDraft());
 	watch(scheduledAt, () => saveDraft());
 	watch(scheduledNoteDelete, () => saveDraft());
+	watch(deliveryTargets, () => saveDraft(), { deep: true });
 }
 
 function checkMissingMention() {
 	if (visibility.value === 'specified') {
-		const ast = mfm.parse(text.value);
+		const ast = parseMfmCached(text.value);
 
 		for (const x of extractMentions(ast)) {
 			if (!visibleUsers.value.some(u => (u.username === x.username) && (u.host === x.host))) {
@@ -481,7 +487,7 @@ function checkMissingMention() {
 }
 
 function addMissingMention() {
-	const ast = mfm.parse(text.value);
+	const ast = parseMfmCached(text.value);
 
 	for (const x of extractMentions(ast)) {
 		if (!visibleUsers.value.some(u => (u.username === x.username) && (u.host === x.host))) {
@@ -495,8 +501,8 @@ function addMissingMention() {
 function swapCwText() {
 	if (useCw.value) {
 		// textの一行目を取り出す
-		const temp = text.value.split(/\r?\n/).join(" ");
-		text.value = cw.value ?? "";
+		const temp = text.value.split(/\r?\n/).join(' ');
+		text.value = cw.value ?? '';
 		cw.value = temp;
 	}
 }
@@ -678,6 +684,12 @@ function showOtherSettings() {
 		action: () => {
 			toggleReactionAcceptance();
 		},
+	}, {
+		icon: 'ti ti-truck-delivery',
+		text: i18n.ts._deliveryTargetControl.deliveryTargetControl,
+		action: () => {
+			toggleDeliveryTargets();
+		},
 	}, { type: 'divider' }, /*{
 		type: 'button',
 		text: i18n.ts._drafts.saveToDraft,
@@ -773,6 +785,7 @@ function clear() {
 	scheduledNoteDelete.value = null;
 	saveToDraft.value = false;
 	disableRightClick.value = false;
+	deliveryTargets.value = null;
 }
 
 function onKeydown(ev: KeyboardEvent) {
@@ -945,6 +958,7 @@ function saveDraft() {
 			reactionAcceptance: reactionAcceptance.value,
 			scheduledAt: scheduledAt.value,
 			scheduledNoteDelete: scheduledNoteDelete.value,
+			deliveryTargets: deliveryTargets.value,
 		},
 	};
 
@@ -981,6 +995,7 @@ async function saveServerDraft(options: {
 		scheduledAt: scheduledAt.value,
 		isActuallyScheduled: options.isActuallyScheduled ?? false,
 		scheduledDelete: scheduledNoteDelete.value,
+		deliveryTargets: deliveryTargets.value,
 	}).then(() => {
 		if (scheduledAt.value != null && options.isActuallyScheduled === true) os.toast(i18n.ts.createSchedulePost, 'scheduled');
 		else os.toast(i18n.ts.noteDrafted, 'drafted');
@@ -1131,6 +1146,7 @@ async function post(ev?: MouseEvent) {
 		disableRightClick: disableRightClick.value,
 		noteId: props.updateMode ? props.initialNote?.id : undefined,
 		scheduledDelete: scheduledNoteDelete.value,
+		deliveryTargets: deliveryTargets.value,
 	};
 
 	if (withHashtags.value && hashtags.value && hashtags.value.trim() !== '') {
@@ -1196,7 +1212,7 @@ async function post(ev?: MouseEvent) {
 			else os.toast(i18n.ts.posted, 'posted');
 
 			if (postData.text && postData.text !== '') {
-				const hashtags_ = mfm.parse(postData.text).map(x => x.type === 'hashtag' && x.props.hashtag).filter(x => x) as string[];
+				const hashtags_ = parseMfmCached(postData.text).map(x => x.type === 'hashtag' && x.props.hashtag).filter(x => x) as string[];
 				const history = JSON.parse(miLocalStorage.getItem('hashtags') ?? '[]') as string[];
 				miLocalStorage.setItem('hashtags', JSON.stringify(unique(hashtags_.concat(history))));
 			}
@@ -1416,6 +1432,7 @@ async function openAccountMenu(ev: MouseEvent) {
 				replyTargetNote.value = draft.reply;
 				reactionAcceptance.value = draft.reactionAcceptance;
 				scheduledAt.value = draft.scheduledAt ?? null;
+				deliveryTargets.value = draft.deliveryTargets ?? null;
 				if (draft.channel) targetChannel.value = draft.channel as unknown as Misskey.entities.Channel;
 
 				visibleUsers.value = [];
@@ -1503,6 +1520,10 @@ function toggleScheduledNoteDelete() {
 	}
 }
 
+function cancelScheduleDelete() {
+	scheduledNoteDelete.value = null;
+}
+
 function showPostMenu(ev: MouseEvent) {
 	const menuItems: MenuItem[] = [];
 
@@ -1534,7 +1555,7 @@ function formClick() {
 	}
 
 	if (props.reply && props.reply.text != null) {
-		const ast = mfm.parse(props.reply.text);
+		const ast = parseMfmCached(props.reply.text);
 		const otherHost = props.reply.user.host;
 
 		for (const x of extractMentions(ast)) {
@@ -1555,12 +1576,15 @@ function formClick() {
 	}
 }
 
-function signin() {
-	const { dispose } = os.popup(XSigninDialog, {
-		autoSet: true,
-	}, {
-		closed: () => dispose(),
-	});
+function toggleDeliveryTargets() {
+	if (deliveryTargets.value) {
+		deliveryTargets.value = null;
+	} else {
+		deliveryTargets.value = {
+			mode: 'include',
+			hosts: [],
+		};
+	}
 }
 
 onMounted(() => {
@@ -1607,6 +1631,7 @@ onMounted(() => {
 				reactionAcceptance.value = draft.data.reactionAcceptance;
 				scheduledAt.value = draft.data.scheduledAt ?? null;
 				scheduledNoteDelete.value = draft.data.scheduledNoteDelete ?? null;
+				deliveryTargets.value = draft.data.deliveryTargets ?? null;
 			}
 		}
 
@@ -1656,6 +1681,7 @@ onMounted(() => {
 					deleteAfter: null,
 				};
 			}
+			deliveryTargets.value = init.deliveryTargets ?? null;
 		}
 
 		nextTick(() => watchForDraft());

@@ -36,6 +36,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<i v-else-if="note.reactionAcceptance === 'likeOnly'" v-tooltip="i18n.ts.likeOnly" class="ti ti-heart"></i>
 			</span>
 			<span v-if="note.localOnly" style="margin-right: 0.5em;"><i v-tooltip="i18n.ts._visibility['disableFederation']" class="ti ti-rocket-off"></i></span>
+			<span
+				v-if="note.deliveryTargets"
+				v-tooltip="`${i18n.ts._deliveryTargetControl[note.deliveryTargets.mode === 'include' ? 'deliveryTargetsInclude' : 'deliveryTargetsExclude'] + ':' + (note.deliveryTargets.hosts?.length ? '\n' + note.deliveryTargets.hosts.map((h, i) => note.deliveryTargets.names?.[i] ? `${note.deliveryTargets.names[i]} (${h})` : h).join('\n') : '\n' + i18n.ts.none)}`"
+				style="margin-right: 0.5em;"
+			>
+				<i :class="note.deliveryTargets.mode === 'include' ? 'ti ti-truck' : 'ti ti-truck-filled'"></i>
+			</span>
 			<span v-if="note.channel" style="margin-right: 0.5em;"><i v-tooltip="note.channel.name" class="ti ti-device-tv"></i></span>
 			<span :class="$style.renoteTime">
 				<button ref="renoteTime" class="_button">
@@ -390,6 +397,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 import { computed, inject, onMounted, ref, useTemplateRef, watch, provide } from 'vue';
 import * as mfm from 'mfc-js';
 import * as Misskey from 'cherrypick-js';
+import { parseMfmCached } from '@/utility/mfm-cache.js';
 import { isLink } from '@@/js/is-link.js';
 import { shouldCollapsed, shouldMfmCollapsed } from '@@/js/collapsed.js';
 import { host } from '@@/js/config.js';
@@ -506,7 +514,7 @@ const clipButton = useTemplateRef('clipButton');
 const galleryEl = useTemplateRef('galleryEl');
 const isMyRenote = $i && ($i.id === note.userId);
 const showContent = ref(false);
-const parsed = computed(() => appearNote.text ? mfm.parse(appearNote.text) : null);
+const parsed = computed(() => appearNote.text ? parseMfmCached(appearNote.text) : null);
 const urls = computed(() => parsed.value ? extractUrlFromMfm(parsed.value).filter((url) => appearNote.renote?.url !== url && appearNote.renote?.uri !== url) : null);
 const isLong = shouldCollapsed(appearNote, urls.value ?? []);
 const isMFM = shouldMfmCollapsed(appearNote);

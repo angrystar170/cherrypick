@@ -11,11 +11,12 @@ import type { Packed } from '@/misc/json-schema.js';
 import { awaitAll } from '@/misc/prelude/await-all.js';
 import type { MiUser } from '@/models/User.js';
 import type { MiNote } from '@/models/Note.js';
-import type { UsersRepository, NotesRepository, FollowingsRepository, PollsRepository, PollVotesRepository, NoteReactionsRepository, ChannelsRepository, MiMeta, EventsRepository } from '@/models/_.js';
+import type { UsersRepository, NotesRepository, FollowingsRepository, PollsRepository, PollVotesRepository, NoteReactionsRepository, ChannelsRepository, InstancesRepository, MiMeta, EventsRepository } from '@/models/_.js';
 import { bindThis } from '@/decorators.js';
 import { DebounceLoader } from '@/misc/loader.js';
 import { IdService } from '@/core/IdService.js';
 import { ReactionsBufferingService } from '@/core/ReactionsBufferingService.js';
+import { RoleService } from '@/core/RoleService.js';
 import type { OnModuleInit } from '@nestjs/common';
 import type { CustomEmojiService } from '../CustomEmojiService.js';
 import type { ReactionService } from '../ReactionService.js';
@@ -66,6 +67,7 @@ export class NoteEntityService implements OnModuleInit {
 	private reactionsBufferingService: ReactionsBufferingService;
 	private idService: IdService;
 	private noteLoader = new DebounceLoader(this.findNoteOrFail);
+	private roleService: RoleService;
 
 	constructor(
 		private moduleRef: ModuleRef,
@@ -97,6 +99,9 @@ export class NoteEntityService implements OnModuleInit {
 		@Inject(DI.channelsRepository)
 		private channelsRepository: ChannelsRepository,
 
+		@Inject(DI.instancesRepository)
+		private instancesRepository: InstancesRepository,
+
 		//private userEntityService: UserEntityService,
 		//private driveFileEntityService: DriveFileEntityService,
 		//private customEmojiService: CustomEmojiService,
@@ -113,6 +118,7 @@ export class NoteEntityService implements OnModuleInit {
 		this.reactionService = this.moduleRef.get('ReactionService');
 		this.reactionsBufferingService = this.moduleRef.get('ReactionsBufferingService');
 		this.idService = this.moduleRef.get('IdService');
+		this.roleService = this.moduleRef.get('RoleService');
 	}
 
 	@bindThis
@@ -393,6 +399,7 @@ export class NoteEntityService implements OnModuleInit {
 		const meId = me ? me.id : null;
 		const note = typeof src === 'object' ? src : await this.noteLoader.load(src);
 		const host = note.userHost;
+		const iAmModerator = me ? await this.roleService.isModerator(me as MiUser) : false;
 
 		const bufferedReactions = opts._hint_?.bufferedReactions != null
 			? (opts._hint_.bufferedReactions.get(note.id) ?? { deltas: {}, pairs: [] })
@@ -462,6 +469,22 @@ export class NoteEntityService implements OnModuleInit {
 			hasPoll: note.hasPoll || undefined,
 			uri: note.uri ?? undefined,
 			url: note.url ?? undefined,
+			hasDeliveryTargets: note.deliveryTargets != null,
+			...((meId === note.userId || iAmModerator) ? {
+				deliveryTargets: note.deliveryTargets ? await (async () => {
+					const deliveryTargets = note.deliveryTargets!;
+					const instances = await this.instancesRepository.findBy({
+						host: In(deliveryTargets.hosts),
+					});
+					const instanceMap = new Map(instances.map(i => [i.host, i.name]));
+
+					return {
+						mode: deliveryTargets.mode,
+						hosts: deliveryTargets.hosts,
+						names: deliveryTargets.hosts.map(host => instanceMap.get(host) ?? null),
+					};
+				})() : undefined,
+			} : {}),
 
 			...(opts.detail ? {
 				clippedCount: note.clippedCount,
